@@ -1,0 +1,23 @@
+name: Setup SSH
+
+on:
+  workflow_call:
+    secrets:
+      HOST: { required: true }
+      USERNAME: { required: true }
+      SSHKEY: { required: true }
+      PASSPHRASE: { required: true }
+      PORT_NUMBER: { required: true }
+
+jobs:
+  ssh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v0.1.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSHKEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          port: ${{ secrets.PORT_NUMBER }}
+          script: echo "SSH connection successful"

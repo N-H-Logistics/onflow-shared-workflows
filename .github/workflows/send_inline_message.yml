@@ -1,0 +1,25 @@
+name: Send Telegram Message
+
+on:
+  workflow_call:
+    inputs:
+      message:
+        required: true
+        type: string
+    secrets:
+      TELEGRAM_TOKEN:
+        required: true
+      TELEGRAM_TO:
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: cbrgm/telegram-github-action@v1
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          to: ${{ secrets.TELEGRAM_TO }}
+          parse-mode: markdown
+          disable-web-page-preview: true
+          message: ${{ inputs.message }}
