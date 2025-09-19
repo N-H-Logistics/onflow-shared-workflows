@@ -11,6 +11,12 @@ on:
         required: false
         type: string
         default: stg
+      registry:
+        required: true
+        type: string
+      image_name:
+        required: true
+        type: string
       port:
         required: true
         type: string
@@ -39,6 +45,8 @@ jobs:
           port: ${{ secrets.PORT_NUMBER }}
           envs: IMAGE_NAME,REGISTRY,DIGITALOCEAN_ACCESS_TOKEN,GITHUB_SHA
           script: |
+            
+
             # Login to registry
             echo "${{ secrets.PASSPHRASE }}" | sudo -S docker login \
               -u "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" \
@@ -47,7 +55,7 @@ jobs:
 
             # Build image tag
             TAG="${{ inputs.tag_prefix }}-$(echo $GITHUB_SHA | head -c7)"
-            IMAGE="${REGISTRY}/${IMAGE_NAME}:$TAG"
+            IMAGE="${{ inputs.registry }}/${{ inputs.image_name }}:$TAG"
 
             # Pull new image
             echo "${{ secrets.PASSPHRASE }}" | sudo -S docker pull "$IMAGE"
@@ -58,6 +66,7 @@ jobs:
 
             # Run new container
             echo "${{ secrets.PASSPHRASE }}" | sudo -S docker run -d \
-              -p ${{ inputs.port }}:80 \
-              --name "${{ inputs.docker_name }}" \
-              "$IMAGE"
+            -p ${{ inputs.port }}:80 \
+            --name "${{ inputs.docker_name }}" \
+            "$IMAGE"
+
