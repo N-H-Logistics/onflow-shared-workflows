@@ -9,6 +9,14 @@ on:
       image_name:
         required: true
         type: string
+      dockerfile:
+        required: false
+        type: string
+        default: docker/backend/Dockerfile
+      context:
+        required: false
+        type: string
+        default: .
     secrets:
       DIGITALOCEAN_ACCESS_TOKEN:
         required: true
@@ -19,17 +27,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: |
+      - name: Build container image
+        run: |
           TAG=$(echo $GITHUB_SHA | head -c7)
-          docker build -f docker/backend/Dockerfile \
-            -t ${{ inputs.registry }}/${{ inputs.image_name }}:stg-$TAG .
+          echo "Building with Dockerfile: ${{ inputs.dockerfile }}"
+          echo "Context: ${{ inputs.context }}"
+          docker build -f ${{ inputs.dockerfile }} \
+            -t ${{ inputs.registry }}/${{ inputs.image_name }}:stg-$TAG \
+            ${{ inputs.context }}
 
-      - uses: digitalocean/action-doctl@v2
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      - run: doctl registry login --expiry-seconds 600
+      - name: Log in to DigitalOcean Container Registry
+        run: doctl registry login --expiry-seconds 600
 
-      - run: |
+      - name: Push image to registry
+        run: |
           TAG=$(echo $GITHUB_SHA | head -c7)
           docker push ${{ inputs.registry }}/${{ inputs.image_name }}:stg-$TAG
