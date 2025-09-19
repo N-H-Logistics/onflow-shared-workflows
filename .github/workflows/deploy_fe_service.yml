@@ -1,0 +1,63 @@
+name: Deploy Container to Droplet
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        required: false
+        type: string
+        default: develop
+      tag_prefix:
+        required: false
+        type: string
+        default: stg
+      port:
+        required: true
+        type: string
+      docker_name:
+        required: true
+        type: string
+    secrets:
+      HOST: { required: true }
+      USERNAME: { required: true }
+      SSHKEY: { required: true }
+      PASSPHRASE: { required: true }
+      PORT_NUMBER: { required: true }
+      DIGITALOCEAN_ACCESS_TOKEN: { required: true }
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy container to droplet
+        uses: appleboy/ssh-action@v0.1.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSHKEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          port: ${{ secrets.PORT_NUMBER }}
+          envs: IMAGE_NAME,REGISTRY,DIGITALOCEAN_ACCESS_TOKEN,GITHUB_SHA
+          script: |
+            # Login to registry
+            echo "${{ secrets.PASSPHRASE }}" | sudo -S docker login \
+              -u "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" \
+              -p "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" \
+              registry.digitalocean.com
+
+            # Build image tag
+            TAG="${{ inputs.tag_prefix }}-$(echo $GITHUB_SHA | head -c7)"
+            IMAGE="${REGISTRY}/${IMAGE_NAME}:$TAG"
+
+            # Pull new image
+            echo "${{ secrets.PASSPHRASE }}" | sudo -S docker pull "$IMAGE"
+
+            # Stop and remove old container
+            echo "${{ secrets.PASSPHRASE }}" | sudo -S docker stop "${{ inputs.docker_name }}" || true
+            echo "${{ secrets.PASSPHRASE }}" | sudo -S docker rm "${{ inputs.docker_name }}" || true
+
+            # Run new container
+            echo "${{ secrets.PASSPHRASE }}" | sudo -S docker run -d \
+              -p ${{ inputs.port }}:80 \
+              --name "${{ inputs.docker_name }}" \
+              "$IMAGE"
