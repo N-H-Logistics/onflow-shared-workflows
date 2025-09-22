@@ -48,7 +48,6 @@ jobs:
           proxy_username: ${{ inputs.proxy_username }}
           proxy_key: ${{ inputs.proxy_key }}
           proxy_port: ${{ inputs.proxy_port }}
-          envs: IMAGE_NAME,REGISTRY,${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }},GITHUB_SHA
           script: |
             mkdir -p ~/.ssh
             echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
