@@ -1,4 +1,4 @@
-name: Droplet SSH Deployment
+name: Setup SSH
 
 on:
   workflow_call:
@@ -6,47 +6,32 @@ on:
       host:
         required: true
         type: string
-      username:
-        required: true
-        type: string
-      sshkey:
-        required: true
-        type: string
-      passphrase:
-        required: true
-        type: string
       proxy_host:
-        required: true
-        type: string
-      proxy_username:
-        required: true
-        type: string
-      proxy_key:
-        required: true
+        required: false
         type: string
       proxy_port:
-        required: true
+        required: false
         type: string
     secrets:
-      SSH_PRIVATE_KEY:
-        required: true
-      DIGITALOCEAN_ACCESS_TOKEN:
-        required: true
+      USERNAME: { required: true }
+      SSHKEY: { required: true }
+      PASSPHRASE: { required: true }
+      SSH_PRIVATE_KEY: { required: true }
 
 jobs:
-  deploy:
+  ssh:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to droplet via SSH action
+      - name: Setup SSH connection
         uses: appleboy/ssh-action@v0.1.3
         with:
           host: ${{ inputs.host }}
-          username: ${{ inputs.username }}
-          key: ${{ inputs.sshkey }}
-          passphrase: ${{ inputs.passphrase }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSHKEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
           proxy_host: ${{ inputs.proxy_host }}
-          proxy_username: ${{ inputs.proxy_username }}
-          proxy_key: ${{ inputs.proxy_key }}
+          proxy_username: ${{ secrets.USERNAME }}
+          proxy_key: ${{ secrets.SSHKEY }}
           proxy_port: ${{ inputs.proxy_port }}
           script: |
             mkdir -p ~/.ssh
