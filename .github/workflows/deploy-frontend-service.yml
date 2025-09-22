@@ -11,7 +11,7 @@ on:
         required: false
         type: string
         default: stg
-      registry:
+      registry: 
         required: true
         type: string
       image_name:
@@ -20,6 +20,10 @@ on:
       port:
         required: true
         type: string
+      container_port:
+        required: false
+        type: string
+        default: 80
       docker_name:
         required: true
         type: string
@@ -66,7 +70,7 @@ jobs:
 
             # Run new container
             echo "${{ secrets.PASSPHRASE }}" | sudo -S docker run -d \
-            -p ${{ inputs.port }}:80 \
+            -p ${{ inputs.port }}:${{ inputs.container_port }} \
             --name "${{ inputs.docker_name }}" \
             "$IMAGE"
 
