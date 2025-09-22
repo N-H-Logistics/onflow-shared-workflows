@@ -1,0 +1,56 @@
+name: Droplet SSH Deployment
+
+on:
+  workflow_call:
+    inputs:
+      host:
+        required: true
+        type: string
+      username:
+        required: true
+        type: string
+      sshkey:
+        required: true
+        type: string
+      passphrase:
+        required: true
+        type: string
+      proxy_host:
+        required: true
+        type: string
+      proxy_username:
+        required: true
+        type: string
+      proxy_key:
+        required: true
+        type: string
+      proxy_port:
+        required: true
+        type: string
+    secrets:
+      SSH_PRIVATE_KEY:
+        required: true
+      DIGITALOCEAN_ACCESS_TOKEN:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to droplet via SSH action
+        uses: appleboy/ssh-action@v0.1.3
+        with:
+          host: ${{ inputs.host }}
+          username: ${{ inputs.username }}
+          key: ${{ inputs.sshkey }}
+          passphrase: ${{ inputs.passphrase }}
+          proxy_host: ${{ inputs.proxy_host }}
+          proxy_username: ${{ inputs.proxy_username }}
+          proxy_key: ${{ inputs.proxy_key }}
+          proxy_port: ${{ inputs.proxy_port }}
+          envs: IMAGE_NAME,REGISTRY,${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }},GITHUB_SHA
+          script: |
+            mkdir -p ~/.ssh
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
