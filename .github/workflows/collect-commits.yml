@@ -1,0 +1,29 @@
+name: Collect Commits
+
+on:
+  workflow_call:
+    outputs:
+      all_commits:
+        description: "Danh sách commit đã format"
+        value: ${{ jobs.build-commits-list.outputs.all_commits }}
+
+jobs:
+  build-commits-list:
+    runs-on: ubuntu-latest
+    outputs:
+      all_commits: ${{ steps.set-output.outputs.all_commits }}
+    steps:
+      - name: Collect commits
+        id: set-output
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            msgs=$(jq -r '.[] | "- \(.id[0:7]) \(.message)"' <<< '${{ toJSON(github.event.commits) }}')
+          else
+            msgs=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "${{ github.event.pull_request.commits_url }}" \
+              | jq -r '.[] | "- \(.sha[0:7]) \(.commit.message)"')
+          fi
+
+          echo "all_commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$msgs" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
