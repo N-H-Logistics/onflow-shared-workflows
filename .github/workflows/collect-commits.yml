@@ -11,19 +11,23 @@ jobs:
   build-commits-list:
     runs-on: ubuntu-latest
     outputs:
-      all_commits: ${{ steps.set-output.outputs.all_commits }}
+      all_commits: ${{ steps.collect.outputs.all_commits }}
     steps:
       - name: Collect commits
-        id: set-output
+        id: collect
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
-            msgs=$(jq -r '.[] | "- \(.id[0:7]) \(.message)"' <<< '${{ toJSON(github.event.commits) }}')
+            msgs=$(jq -r '.[] | select(.message | startswith("Merge pull request") | not) 
+              | "- \(.id[0:7]) \(.message)"' <<< '${{ toJSON(github.event.commits) }}')
           else
             msgs=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               "${{ github.event.pull_request.commits_url }}" \
-              | jq -r '.[] | "- \(.sha[0:7]) \(.commit.message)"')
+              | jq -r '.[] | select(.commit.message | startswith("Merge pull request") | not) 
+              | "- \(.sha[0:7]) \(.commit.message)"')
           fi
 
-          echo "all_commits<<EOF" >> $GITHUB_OUTPUT
-          echo "$msgs" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "all_commits<<EOF"
+            echo "$msgs"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
