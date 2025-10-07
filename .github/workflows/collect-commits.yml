@@ -24,7 +24,7 @@ jobs:
             msgs=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               "${{ github.event.pull_request.commits_url }}" \
               | jq -r '.[] 
-                  | select(.commit.message | startswith("Merge pull request") | not) 
+                  | select(.commit.message | startswith("## 🚀 Release Pull Request") | not) 
                   | "- \(.sha[0:7]) \(.commit.message)"')
           fi
 
