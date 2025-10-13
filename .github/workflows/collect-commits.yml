@@ -18,13 +18,15 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
             msgs=$(jq -r '.[] 
-              | select(.message | startswith("Merge pull request") | not) 
+              | select(.message | startswith("Merge pull request") | not)
+              | select(.message | contains("Release Pull Request") | not)
               | "- \(.id[0:7]) \(.message)"' <<< '${{ toJSON(github.event.commits) }}')
           else
             msgs=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               "${{ github.event.pull_request.commits_url }}" \
               | jq -r '.[] 
-                  | select(.commit.message | startswith("## 🚀 Release Pull Request") | not) 
+                  | select(.commit.message | startswith("## 🚀 Release Pull Request") | not)
+                  | select(.commit.message | contains("Release Pull Request") | not)
                   | "- \(.sha[0:7]) \(.commit.message)"')
           fi
 
@@ -33,6 +35,7 @@ jobs:
             echo "$msgs"
             echo "EOF"
           } >> $GITHUB_OUTPUT
+
 
 
 
