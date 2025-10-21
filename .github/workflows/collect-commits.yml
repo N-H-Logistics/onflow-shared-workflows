@@ -23,11 +23,11 @@ jobs:
               | "- \(.id[0:7]) \(.message)"' <<< '${{ toJSON(github.event.commits) }}')
           else
             msgs=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              "${{ github.event.pull_request.commits_url }}" \
-              | jq -r '.[] 
-                  | select(.commit.message | startswith("## 🚀 Release Pull Request") | not)
-                  | select(.commit.message | contains("Release Pull Request") | not)
-                  | "- \(.sha[0:7]) \(.commit.message)"')
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${pr_number}/commits" \
+            | jq -r '.[] 
+                | select(.commit.message | startswith("## 🚀 Release Pull Request") | not)
+                | select(.commit.message | contains("Release Pull Request") | not)
+                | "- \(.commit.message)"')
           fi
 
           {
