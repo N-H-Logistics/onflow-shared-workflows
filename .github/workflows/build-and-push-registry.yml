@@ -58,7 +58,23 @@ jobs:
       - name: Remove all old images
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
-        run: if [ ! -z "$(doctl registry repository list | grep "$(echo $IMAGE_NAME)")" ]; then doctl registry repository delete-tag $(echo $IMAGE_NAME) $(doctl registry repository list-tags $(echo $IMAGE_NAME) | grep -o "sha.*") --force; else echo "No repository"; fi
+          CURRENT_TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          if doctl registry repository list --no-header | awk '{print $1}' | grep -qx "$IMAGE_NAME"; then
+            echo "Found repository $IMAGE_NAME, deleting old tags..."
+
+            for tag in $(doctl registry repository list-tags "$IMAGE_NAME" --format Tag --no-header); do
+              if [ "$tag" != "$CURRENT_TAG" ]; then
+                echo "Deleting tag: $tag"
+                doctl registry repository delete-tag "$IMAGE_NAME" "$tag" --force
+              else
+                echo "Skip current tag: $tag"
+              fi
+            done
+          else
+            echo "No repository $IMAGE_NAME"
+          fi
+
 
       - name: Push image to registry
         run: docker push ${{ inputs.registry }}/${{ inputs.image_name }}:${{ steps.meta.outputs.tag }}
