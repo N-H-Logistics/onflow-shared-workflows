@@ -60,21 +60,37 @@ jobs:
           IMAGE_NAME: ${{ inputs.image_name }}
           CURRENT_TAG: ${{ steps.meta.outputs.tag }}
         run: |
-          if doctl registry repository list --no-header | awk '{print $1}' | grep -qx "$IMAGE_NAME"; then
-            echo "Found repository $IMAGE_NAME, deleting old tags..."
+          set -e
 
-            for tag in $(doctl registry repository list-tags "$IMAGE_NAME" --format Tag --no-header); do
-              if [ "$tag" != "$CURRENT_TAG" ]; then
-                echo "Deleting tag: $tag"
-                doctl registry repository delete-tag "$IMAGE_NAME" "$tag" --force
-              else
-                echo "Skip current tag: $tag"
-              fi
-            done
-          else
-            echo "No repository $IMAGE_NAME"
+          echo "Repository: $IMAGE_NAME"
+          echo "Current tag: $CURRENT_TAG"
+
+          if ! doctl registry repository list --no-header | awk '{print $1}' | grep -qx "$IMAGE_NAME"; then
+            echo "Repository $IMAGE_NAME not found, skip cleanup"
+            exit 0
           fi
 
+          doctl registry repository list-tags "$IMAGE_NAME" --format Tag --no-header || {
+            echo "No tags found, skip cleanup"
+            exit 0
+          }
+
+          TAGS=$(doctl registry repository list-tags "$IMAGE_NAME" --format Tag --no-header | sed '/^$/d')
+
+          if [ -z "$TAGS" ]; then
+            echo "No tags to delete"
+            exit 0
+          fi
+
+          for tag in $TAGS; do
+            if [ "$tag" = "$CURRENT_TAG" ]; then
+              echo "Skip current tag: $tag"
+              continue
+            fi
+
+            echo "Deleting tag: $tag"
+            doctl registry repository delete-tag "$IMAGE_NAME" "$tag" --force
+          done
 
       - name: Push image to registry
         run: docker push ${{ inputs.registry }}/${{ inputs.image_name }}:${{ steps.meta.outputs.tag }}
