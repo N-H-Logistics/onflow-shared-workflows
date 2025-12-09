@@ -55,7 +55,7 @@ jobs:
       - name: Log in to DigitalOcean Container Registry
         run: doctl registry login --expiry-seconds 600
       
-      - name: Remove all old images (keep last 3)
+      - name: Remove all old images (keep last 10)
         env:
           IMAGE_NAME: ${{ inputs.image_name }}
           CURRENT_TAG: ${{ steps.meta.outputs.tag }}
@@ -83,7 +83,7 @@ jobs:
           fi
 
           # Keep last 3 tags
-          KEEP_TAGS=$(echo "$TAGS" | head -n 3)
+          KEEP_TAGS=$(echo "$TAGS" | head -n 10)
 
           echo "Tags to keep:"
           echo "$KEEP_TAGS"
