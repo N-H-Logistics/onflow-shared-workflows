@@ -1,25 +1,47 @@
-name: Send Telegram Message
+name: Manual Approval
 
 on:
   workflow_call:
     inputs:
+      title:
+        description: "Approval issue title"
+        required: false
+        default: "Approve deployment"
+        type: string
       message:
+        description: "Approval message body"
+        required: false
+        default: "Please approve to continue."
+        type: string
+      approvers:
+        description: "Comma-separated GitHub usernames"
         required: true
         type: string
+      minimum_approvals:
+        description: "Minimum approvals required"
+        required: false
+        default: 1
+        type: number
     secrets:
-      TELEGRAM_TOKEN:
-        required: true
-      TELEGRAM_TO:
-        required: true
+      GITHUB_TOKEN:
+        required: false
 
 jobs:
-  notify:
+  approval:
     runs-on: ubuntu-latest
     steps:
-      - uses: cbrgm/telegram-github-action@v1
+      - name: Wait for manual approval
+        uses: trstringer/manual-approval@v1
         with:
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          to: ${{ secrets.TELEGRAM_TO }}
-          parse-mode: markdown
-          disable-web-page-preview: true
-          message: ${{ inputs.message }}
+          secret: ${{ secrets.GITHUB_TOKEN || github.token }}
+          approvers: ${{ inputs.approvers }}
+          minimum-approvals: ${{ inputs.minimum_approvals }}
+          issue-title: ${{ inputs.title }}
+          issue-body: |
+            ${{ inputs.message }}
+
+            ---
+            **Repo:** `${{ github.repository }}`
+            **Branch:** `${{ github.ref_name }}`
+            **Actor:** `${{ github.actor }}`
+            **Run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
