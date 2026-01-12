@@ -6,13 +6,13 @@ on:
       title:
         description: "Approval issue title"
         required: false
-        default: "Approve deployment"
         type: string
+        default: "🚨 Approve Deployment"
       message:
         description: "Approval message body"
         required: false
-        default: "Please approve to continue."
         type: string
+        default: "Please approve to proceed with the deployment."
       approvers:
         description: "Comma-separated GitHub usernames"
         required: true
@@ -20,11 +20,8 @@ on:
       minimum_approvals:
         description: "Minimum approvals required"
         required: false
-        default: 1
         type: number
-    secrets:
-      GITHUB_TOKEN:
-        required: false
+        default: 1
 
 jobs:
   approval:
@@ -33,7 +30,7 @@ jobs:
       - name: Wait for manual approval
         uses: trstringer/manual-approval@v1
         with:
-          secret: ${{ secrets.GITHUB_TOKEN || github.token }}
+          secret: ${{ github.token }}
           approvers: ${{ inputs.approvers }}
           minimum-approvals: ${{ inputs.minimum_approvals }}
           issue-title: ${{ inputs.title }}
@@ -41,7 +38,7 @@ jobs:
             ${{ inputs.message }}
 
             ---
-            **Repo:** `${{ github.repository }}`
-            **Branch:** `${{ github.ref_name }}`
-            **Actor:** `${{ github.actor }}`
-            **Run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Repo: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Actor: ${{ github.actor }}
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
