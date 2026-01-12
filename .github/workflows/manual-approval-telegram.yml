@@ -1,18 +1,44 @@
-name: Telegram Manual Approval
+name: Manual Approval
 
 on:
   workflow_call:
-    secrets:
-      TELEGRAM_TOKEN:
+    inputs:
+      title:
+        description: "Approval issue title"
+        required: false
+        type: string
+        default: "🚨 Approve Deployment"
+      message:
+        description: "Approval message body"
+        required: false
+        type: string
+        default: "Please approve to proceed with the deployment."
+      approvers:
+        description: "Comma-separated GitHub usernames"
         required: true
-      TELEGRAM_TO:
-        required: true
+        type: string
+      minimum_approvals:
+        description: "Minimum approvals required"
+        required: false
+        type: number
+        default: 1
 
 jobs:
-  approve:
+  approval:
     runs-on: ubuntu-latest
     steps:
-      - uses: powerdot/telegram-manual-approval@main
+      - name: Wait for manual approval
+        uses: trstringer/manual-approval@v1
         with:
-          TELEGRAM_KEY: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_TO }}
+          secret: ${{ github.token }}
+          approvers: ${{ inputs.approvers }}
+          minimum-approvals: ${{ inputs.minimum_approvals }}
+          issue-title: ${{ inputs.title }}
+          issue-body: |
+            ${{ inputs.message }}
+
+            ---
+            Repo: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Actor: ${{ github.actor }}
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
